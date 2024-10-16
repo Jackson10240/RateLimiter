@@ -4,6 +4,8 @@
 
 `RateLimiter` 是一个用于限制请求频率的PHP库。它支持多种存储后端（如Redis和数据库，比如 Sqlite），并提供不同的限流策略（如令牌桶策略）。本项目旨在帮助开发者轻松实现请求限流功能。
 
+并且实现动态配置，如果结合配置中心，可以实现实时调整限流策略。
+
 ## 项目结构
 
 ```
@@ -19,9 +21,12 @@
     │   │   ├── LeakyBucketStrategy.php
     │   │   └── StrategyInterface.php
     │   │   ├── TokenBucketStrategy.php
+    │   ├── config.json
+    │   └── ConfigRateLimiter.php
     │   ├── DatabaseConnection.php
     │   ├── RateLimiter.php
     │   ├── RateLimiterInterface.php
+    │   └── TestConfigRateLimiter.php
     │   └── TestPHPInfo.php
     │   └── TestSqlite.php
     │   └── TestRedis.php
@@ -175,6 +180,66 @@ $rateLimiter = new RateLimiter($strategy, $storage);
 // 测试限流器
 for ($i = 0; $i < 15; $i++) {
     if ($rateLimiter->limit('user:123', 1, 5)) {
+        echo "Request $i allowed\n";
+    } else {
+        echo "Request $i denied\n";
+    }
+    sleep(1); // 模拟每秒一个请求
+}
+```
+
+
+## 动态配置
+```json
+{
+  "rate_limiters": [
+    {
+      "name": "global_limiter",
+      "strategy": "TokenBucket",
+      "storage": "Redis",
+      "limit": 1,
+      "interval": 5,
+      "key_pattern": "global_limiter"
+    },
+    {
+      "name": "user_limiter",
+      "strategy": "LeakyBucket",
+      "storage": "Memory",
+      "limit": 1,
+      "interval": 5,
+      "key_pattern": "user_limiter:{user_id}"
+    }
+  ]
+}
+
+```
+
+```php
+<?php
+require '../vendor/autoload.php';
+
+use Bytedance\RateLimiter\RateLimiterFactory;
+
+
+// 使用示例
+$factory = new RateLimiterFactory('config.json');
+// $rateLimiter = $factory->createRateLimiter('user_limiter');
+// $limit = $factory->getLimit('user_limiter');
+// $interval = $factory->getInterval('user_limiter');
+
+
+// 动态切换
+$rateLimiter = $factory->createRateLimiter('global_limiter');
+$limit = $factory->getLimit('global_limiter');
+$interval = $factory->getInterval('global_limiter');
+
+
+// 自定义限流参数
+$context = ['user_id' => 123];
+
+// 测试限流器
+for ($i = 0; $i < 15; $i++) {
+    if ($rateLimiter->limit($context, $limit, $interval)) {
         echo "Request $i allowed\n";
     } else {
         echo "Request $i denied\n";
