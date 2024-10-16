@@ -1,0 +1,20 @@
+{
+  "rate_limiters": [
+    {
+      "name": "global_limiter",
+      "strategy": "TokenBucket",
+      "storage": "Redis",
+      "limit": 1,
+      "interval": 5,
+      "key_pattern": "global_limiter"
+    },
+    {
+      "name": "user_limiter",
+      "strategy": "LeakyBucket",
+      "storage": "Memory",
+      "limit": 1,
+      "interval": 5,
+      "key_pattern": "user_limiter:{user_id}"
+    }
+  ]
+}

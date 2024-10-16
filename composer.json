@@ -1,0 +1,16 @@
+{
+    "name": "bytedance/rate-limiter",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "Bytedance\\RateLimiter\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "wujie.qianlian",
+            "email": "wujie.qianlian@dcarlife.com"
+        }
+    ],
+    "require": {}
+}
